@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #83a4d4, #b6fbff);
+      margin: 0;
+      padding: 20px;
+      color: #333;
+    }
+    .container {
+      max-width: 700px;
+      margin: auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      font-size: 16px;
+    }
+    .forecast {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .day {
+      background: #f0f8ff;
+      padding: 10px;
+      border-radius: 8px;
+      text-align: center;
+    }
+    .day img {
+      width: 40px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Weather App</h1>
+    <input type="text" id="locationInput" placeholder="Enter location" />
+    <button onclick="getWeather()">Get Weather</button>
+    <div id="weatherResult"></div>
+    <div id="forecastResult" class="forecast"></div>
+  </div>
+
+  <script>
+    async function getWeather() {
+      const location = document.getElementById('locationInput').value;
+      const key = '029c126d5ab049549aa162907253107';
+
+      try {
+        // Current Weather
+        const currentRes = await fetch(`https://api.weatherapi.com/v1/current.json?key=${key}&q=${location}&aqi=yes`);
+        const currentData = await currentRes.json();
+
+        // 7-Day Forecast
+        const forecastRes = await fetch(`https://api.weatherapi.com/v1/forecast.json?key=${key}&q=${location}&days=7`);
+        const forecastData = await forecastRes.json();
+
+        const current = currentData.current;
+        const locationName = currentData.location.name + ', ' + currentData.location.country;
+
+        document.getElementById('weatherResult').innerHTML = `
+          <h2>Current Weather in ${locationName}</h2>
+          <p><strong>Temperature:</strong> ${current.temp_c} °C</p>
+          <p><strong>Humidity:</strong> ${current.humidity} %</p>
+          <p><strong>Wind Speed:</strong> ${current.wind_kph} kph</p>
+          <p><strong>Visibility:</strong> ${current.vis_km} km</p>
+          <p><strong>Condition:</strong> ${current.condition.text} <img src="${current.condition.icon}" alt="" /></p>
+        `;
+
+        // Forecast
+        const forecastHTML = forecastData.forecast.forecastday.map(day => {
+          return `
+            <div class="day">
+              <h4>${day.date}</h4>
+              <img src="${day.day.condition.icon}" alt="">
+              <p>${day.day.condition.text}</p>
+              <p><strong>Max:</strong> ${day.day.maxtemp_c}°C</p>
+              <p><strong>Min:</strong> ${day.day.mintemp_c}°C</p>
+            </div>
+          `;
+        }).join('');
+        document.getElementById('forecastResult').innerHTML = forecastHTML;
+
+      } catch (err) {
+        document.getElementById('weatherResult').innerHTML = `<p style="color:red">Error fetching weather. Please check the location.</p>`;
+        document.getElementById('forecastResult').innerHTML = '';
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
